@@ -5,6 +5,7 @@ import axios from "axios";
 import CardVideo from "../component/CardVideo";
 import Profile from "../component/Profile";
 import Search from "../component/Search";
+import { useSelector } from "react-redux";
 
 export default function Vedio() {
   const params = useParams().id;
@@ -20,15 +21,24 @@ export default function Vedio() {
   const [commitAll, setcommitAll] = React.useState([]);
   const navigate = useNavigate();
   const [allVedio, setallVedio] = React.useState([]);
+  const [searchVedio, setsearchVedio] = React.useState([]);
   const [deleteCo, setdelteCo] = React.useState([]);
   const [hidden, sethidden] = React.useState("");
   const [allData, setallData] = React.useState([]);
+  const result = useSelector((state) => state.search.result);
+  const formatViwes = (e) => {
+    if (e >= 1000000) {
+      return (e / 1000000).toFixed(1).replace(/\.0/, "") + " مليون مشاهدة ";
+    } else if (e >= 1000) {
+      return (e / 1000).toFixed(1).replace(/\.0/, "") + " الف مشاهدة  ";
+    }
+  };
   React.useEffect(() => {
     get();
     click();
     console.log("dd");
     //   commitAll
-  }, [params]);
+  }, [params, result]);
   const get = () => {
     // console.log(localStorage.getItem("id"));
     localStorage.getItem("id") &&
@@ -61,16 +71,27 @@ export default function Vedio() {
             });
         });
         setcommitAll(array);
-        // console.log(commitAll);
       });
   };
   const click = () => {
+    setsearchVedio(result);
     axios
       .get(
         "https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=10&regionCode=SA&key=AIzaSyBRPnllmswwRZq4_bXWyNryBxeiBflJwPU"
       )
       .then((res) => {
         setAurVedio(res.data.items.filter((e) => e.id == params));
+        if (AutoVedio.length == 0)
+          axios
+            .get(
+              `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${params}&key=AIzaSyBRPnllmswwRZq4_bXWyNryBxeiBflJwPU
+`
+            )
+            .then((e) => {
+              setAurVedio(e.data.items);
+            });
+        console.log();
+
         // setfilterVedio(res.data.items)
         setallVedio(res.data.items.filter((e) => e.id !== params));
         // console.log(allVedio);
@@ -78,10 +99,6 @@ export default function Vedio() {
   };
 
   const videoFaivoret = () => {
-    // allVedio.map(e=>{
-    // console.log(islike);
-    // allData.liked.find(item=>  item.id==e.id)
-
     // (res.data.items.filter(e=>e.id!==params))
     // })
     // log;
@@ -135,7 +152,6 @@ export default function Vedio() {
   };
   const videoFaivoretRemove = () => {
     let array = [];
-    // if (deslike == false) {
     if (allData.find((e) => e.id == params)) {
       array = allData;
       let index = allData.findIndex((i) => i.id == params);
@@ -260,7 +276,6 @@ export default function Vedio() {
   };
 
   const handlesearch = () => {
-    console.log(search);
     sethidden("none");
     axios
       .get(
@@ -283,50 +298,17 @@ export default function Vedio() {
           className=" px-8 max-md:p-0 h-20 flex justify-between 
 items-center w-full"
         >
-          <Search handlesearch={()=>handlesearch()} setSearch={setSearch} />
+          <Search sethidden={sethidden} />
 
-          <label className="flex cursor-pointer gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="5" />
-              <path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
-            </svg>
-            <input
-              type="checkbox"
-              value="dark"
-              className="toggle theme-controller"
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
-          </label>
+          {/* <Search handlesearch={() => handlesearch()} setSearch={setSearch} /> */}
 
           <Profile />
         </nav>
 
-        <section className="flex max-md:flex-col w-fit max-md:w-full ">
+        <section className="flex  max-md:flex-col w-fit max-md:w-full ">
           <div
             style={{ display: hidden }}
-            className="msx-sm:w-full overflow-x-hidden w-[50vw] mx-4 "
+            className=" max-sm:w-[90%] overflow-x-hidden w-[50vw] mx-4 "
           >
             <iframe
               className="rounded-xl max-md:h-[30vh]  "
@@ -343,9 +325,15 @@ items-center w-full"
               {AutoVedio.length !== 0 && AutoVedio[0].snippet.title}
             </h1>
             <div className="flex self-start gap-8 mt-5  items-center justify-between">
-              <strong>
-                {AutoVedio.length !== 0 && AutoVedio[0].snippet.channelTitle}
-              </strong>
+              <div className="flex flex-col">
+                <strong>
+                  {AutoVedio.length !== 0 && AutoVedio[0].snippet.channelTitle}
+                </strong>
+                <span className="font-serif text-base mx-2">
+                  {AutoVedio.length !== 0 &&
+                    formatViwes(AutoVedio[0].statistics.viewCount)}{" "}
+                </span>
+              </div>
 
               <div className="flex">
                 <button
@@ -451,12 +439,7 @@ items-center w-full"
                 </span>
                 تعليقاً
               </strong>
-              {/* <summary dir='rtl'>
-                
-                {AutoVedio.length!==0&&AutoVedio[0].statistics.commentCount.slice(1,4)}
-                ...المزيد </summary> */}
 
-              {/* </details> */}
               <br />
               {/* commit------------------------------------------------------------- */}
               <div>
@@ -654,11 +637,9 @@ items-center w-full"
                 </section>
               </div>
             </div>
-            <br />
-            <br />
           </div>
 
-          <div className=" w-[30vw] max-md:w-full  ">
+          <div className=" w-[30vw] max-md:w-full px-2  ">
             <section>
               <div className="border mb-5 border-zinc-200  rounded-2xl flex flex-col">
                 <img
@@ -698,89 +679,113 @@ items-center w-full"
               {allVedio != "" ? (
                 <>
                   {" "}
-                  {allVedio.map((e, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        e.kind.includes("youtube#search")
-                          ? navigate(`/${e.id.videoId}`)
-                          : navigate(`/${e.id}`);
-                        get();
+                  {hidden != "none" ? (
+                    allVedio.map((e, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          e.kind.includes("youtube#search")
+                            ? navigate(`/${e.id.videoId}`)
+                            : navigate(`/${e.id}`);
+                          get();
 
-                        // navigate(0);
-                      }}
-                    >
-                      <div className="max-h-40 flex mt-4  w-full">
-                        <img
-                          className="h-40 rounded-lg  w-52"
-                          src={e.snippet.thumbnails.medium.url}
-                          alt=""
-                        />
+                          // navigate(0);
+                        }}
+                      >
+                        <div className="h-44  border-4 overflow-auto flex mt-4 ">
+                          <img
+                            className="h-40 rounded-lg  w-52"
+                            src={e.snippet.thumbnails.medium.url}
+                            alt=""
+                          />
 
-                        <div className="flex flex-col items-start mx-4">
-                          <span className="font-bold">{e.snippet.title}</span>
-                          <span className="text-base">
-                            {e.snippet.channelTitle}
-                          </span>
+                          <div className="flex max-sm:overflow-auto flex-col items-start text-lg mx-4">
+                            <span className="font-bold">{e.snippet.title}</span>
+                            <span className="text-base">
+                              {e.snippet.channelTitle}
+                            </span>
 
-                          {e.kind.includes("youtube#search") ? (
-                            <></>
-                          ) : (
-                            <div>
-                              {" "}
-                              <span className=" font-sans ">
-                                <span>{e.statistics.viewCount} </span>
-
-                                <span className="font-serif text-base mx-2">
-                                  مشاهدة{" "}
+                            {e.kind.includes("youtube#search") ? (
+                              <></>
+                            ) : (
+                              <div>
+                                {" "}
+                                <span className=" font-sans ">
+                                  <span className="font-serif text-base mx-2">
+                                    {formatViwes(e.statistics.viewCount)}{" "}
+                                  </span>
                                 </span>
+                                <span className="text-base">
+                                  . قبل
+                                  <span className="font-sans mx-2">
+                                    {e.contentDetails.dimension}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <>
+                      {searchVedio.map((e, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            e.kind.includes("youtube#search")
+                              ? navigate(`/${e.id.videoId}`)
+                              : navigate(`/${e.id}`);
+                            get();
+
+                            // navigate(0);
+                          }}
+                        >
+                          <div className="max-h-40 flex mt-4  w-full">
+                            <img
+                              className="h-40 rounded-lg  w-52"
+                              src={e.snippet.thumbnails.medium.url}
+                              alt=""
+                            />
+
+                            <div className="flex overflow-auto flex-col items-start mx-4">
+                              <span className="font-bold">
+                                {e.snippet.title}
                               </span>
                               <span className="text-base">
-                                قبل
-                                <span className="font-sans mx-2">
-                                  {e.contentDetails.dimension}
-                                </span>
+                                {e.snippet.channelTitle}
                               </span>
+
+                              {e.kind.includes("youtube#search") ? (
+                                <></>
+                              ) : (
+                                <div>
+                                  {" "}
+                                  <span className=" font-sans ">
+                                    <span>{e.statistics.viewCount} </span>
+
+                                    <span className="font-serif text-base mx-2">
+                                      مشاهدة{" "}
+                                    </span>
+                                  </span>
+                                  <span className="text-base">
+                                    قبل
+                                    <span className="font-sans mx-2">
+                                      {e.contentDetails.dimension}
+                                    </span>
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </>
               ) : (
                 <section>
                   <p className="text-2xl m-8">لاتوجد نتائج بحث </p>
-
-                  {allVedio.map((e, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        navigate(`/${e.id}`);
-                      }}
-                    >
-                      <div className="max-h-40 flex max-md:flex-col mt-4  w-full">
-                        <img
-                          className="h-40 w-52"
-                          src={e.snippet.thumbnails.medium.url}
-                          alt=""
-                        />
-                        <div className="flex flex-col pr-5 ">
-                          <h2 className="text-xl  w-full">{e.snippet.title}</h2>
-
-                          <div className="text-xl text-right">
-                            {" "}
-                            <small className="font-sans">
-                              {/* {e.statistics.viewCount.length>=4} */}
-                              <br />
-                              {/* {e.statistics.viewCount} */}
-                              {/* <small className='font-serif'>        مشاهدة</small>         */}
-                            </small>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
                 </section>
               )}
             </section>

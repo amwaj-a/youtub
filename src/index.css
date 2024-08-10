@@ -3,5 +3,6 @@
 @tailwind utilities;
 
 body{
+    font-family: Roboto, Arial, sans-serif;
 scrollbar-width: 0px;
 }
